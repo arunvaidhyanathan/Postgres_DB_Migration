@@ -1,0 +1,44 @@
+spring:
+  datasource:
+    source:
+      url: ${SOURCE_DB_URL}
+      username: ${SOURCE_DB_USERNAME}
+      password: ${SOURCE_DB_PASSWORD}
+      hikari:
+        maximum-pool-size: 8
+        minimum-idle: 3
+        connection-timeout: 30000
+        idle-timeout: 600000
+        max-lifetime: 1800000
+    
+    target:
+      url: ${TARGET_DB_URL}
+      username: ${TARGET_DB_USERNAME}
+      password: ${TARGET_DB_PASSWORD}
+      hikari:
+        maximum-pool-size: 15
+        minimum-idle: 5
+        connection-timeout: 30000
+        idle-timeout: 600000
+        max-lifetime: 1800000
+
+logging:
+  level:
+    com.company.migration: INFO
+    liquibase: INFO
+    root: WARN
+  file:
+    name: /var/log/migration/migration.log
+    max-size: 500MB
+    max-history: 90
+
+migration:
+  api:
+    security:
+      enabled: true
+  backup:
+    enabled: true
+    path: /var/backups/migration
+  rollback:
+    enabled: true
+    auto-rollback-on-failure: true

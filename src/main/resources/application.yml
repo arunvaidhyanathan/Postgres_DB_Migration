@@ -1,0 +1,67 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: postgresql-migration
+  
+  profiles:
+    active: dev
+    
+  datasource:
+    source:
+      url: jdbc:postgresql://localhost:5432/dev_database
+      username: ${SOURCE_DB_USERNAME:dev_user}
+      password: ${SOURCE_DB_PASSWORD:dev_password}
+      driver-class-name: org.postgresql.Driver
+      hikari:
+        maximum-pool-size: 5
+        minimum-idle: 2
+    
+    target:
+      url: jdbc:postgresql://aws-prod-instance.region.rds.amazonaws.com:5432/prod_database
+      username: ${TARGET_DB_USERNAME:prod_user}
+      password: ${TARGET_DB_PASSWORD:prod_password}
+      driver-class-name: org.postgresql.Driver
+      hikari:
+        maximum-pool-size: 10
+        minimum-idle: 3
+
+  liquibase:
+    enabled: false # We'll manage this programmatically
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    
+logging:
+  level:
+    com.company.migration: DEBUG
+    liquibase: INFO
+    org.springframework: INFO
+    root: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/migration.log
+    max-size: 100MB
+    max-history: 30
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+migration:
+  api:
+    enabled: true
+    security:
+      enabled: false # Set to true in production
+  backup:
+    enabled: true
+    path: ./backups
+  rollback:
+    enabled: true
+    auto-rollback-on-failure: false

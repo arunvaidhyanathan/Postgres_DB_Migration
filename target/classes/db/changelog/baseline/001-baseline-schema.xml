@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+    <!-- Baseline Migration: This changeset will be customized based on your source database structure -->
+    <changeSet id="001-baseline-schema" author="migration-system" context="production">
+        <comment>Baseline schema migration from on-premises PostgreSQL to AWS</comment>
+        
+        <!-- Example schema creation - customize based on your source database -->
+        <createSchema schemaName="public" catalogName="prod_database"/>
+        
+        <!-- Example table creation - replace with actual tables from your source DB -->
+        <createTable tableName="migration_log" schemaName="public">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="migration_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="execution_time" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="details" type="TEXT"/>
+        </createTable>
+        
+        <!-- Example index creation -->
+        <createIndex tableName="migration_log" indexName="idx_migration_log_status">
+            <column name="status"/>
+        </createIndex>
+        
+        <!-- Example sequence creation -->
+        <createSequence sequenceName="migration_log_seq" 
+                       startValue="1" 
+                       incrementBy="1" 
+                       schemaName="public"/>
+        
+        <!-- Rollback instructions -->
+        <rollback>
+            <dropSequence sequenceName="migration_log_seq" schemaName="public"/>
+            <dropIndex tableName="migration_log" indexName="idx_migration_log_status"/>
+            <dropTable tableName="migration_log" schemaName="public"/>
+            <dropSchema schemaName="public" catalogName="prod_database"/>
+        </rollback>
+    </changeSet>
+    
+    <!-- Additional changesets for roles, grants, and other database objects -->
+    <changeSet id="002-create-roles" author="migration-system" context="production">
+        <comment>Create database roles and users</comment>
+        
+        <!-- Example role creation - customize based on your source database -->
+        <sql>
+            CREATE ROLE app_user WITH LOGIN PASSWORD 'secure_password';
+            CREATE ROLE readonly_user WITH LOGIN PASSWORD 'readonly_password';
+            GRANT CONNECT ON DATABASE prod_database TO app_user;
+            GRANT CONNECT ON DATABASE prod_database TO readonly_user;
+            GRANT USAGE ON SCHEMA public TO app_user;
+            GRANT USAGE ON SCHEMA public TO readonly_user;
+            GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app_user;
+            GRANT SELECT ON ALL TABLES IN SCHEMA public TO readonly_user;
+        </sql>
+        
+        <rollback>
+            <sql>
+                REVOKE ALL ON ALL TABLES IN SCHEMA public FROM readonly_user;
+                REVOKE ALL ON ALL TABLES IN SCHEMA public FROM app_user;
+                REVOKE USAGE ON SCHEMA public FROM readonly_user;
+                REVOKE USAGE ON SCHEMA public FROM app_user;
+                REVOKE CONNECT ON DATABASE prod_database FROM readonly_user;
+                REVOKE CONNECT ON DATABASE prod_database FROM app_user;
+                DROP ROLE IF EXISTS readonly_user;
+                DROP ROLE IF EXISTS app_user;
+            </sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
